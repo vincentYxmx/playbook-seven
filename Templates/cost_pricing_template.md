@@ -13,7 +13,7 @@
 | 小件毛利率 | **25–30%** |
 | 广告成本占比 | 大件 **~5%** / 小件 **5–10%** |
 | 退货损耗 | **2%** |
-| 平台佣金 | 按类目实查（Mercado Livre 常见 8–16%） |
+| 平台佣金 | 按一等站点的公开表实查。没有单一费率的站点不要套巴西或 Mercado Livre 的旧百分比 |
 | 尾程物流 | 按实际商品测（SOP 称为"商品尾程费用"） |
 | 仓库操作费 | 按产品尺寸档位 |
 | 调价节奏 | **前期可略降毛利养权重，权重起来后再回提** |
@@ -22,12 +22,12 @@
 
 ## 二、核心公式
 
-> **2026-10 起**：本模板的手工计算已由脚本 `Agents/02_Product_Strategy_Agent/scripts/sku_pricing.py`
-> 自动化，并内置 5 个平台的费率预设（Shopee BR / ML Clássico / ML Premium / Amazon BR / TikTok Shop BR，
-> 含价格分档佣金与按件固定费）：
+> 手工计算已由 `Agents/02_Product_Strategy_Agent/scripts/sku_pricing.py` 执行。
+> 一等预设是 eBay US、TikTok Shop US，以及必须自填佣金的 Amazon US / Shopee SEA / TikTok SEA。
+> 巴西站与 Mercado Livre 仍在表里，但是参考。税不代算。
 >
 > ```bash
-> python Agents/02_Product_Strategy_Agent/scripts/sku_pricing.py calc --platform shopee_br --cost 935 --price 2199
+> python Agents/02_Product_Strategy_Agent/scripts/sku_pricing.py calc --platform ebay_us --cost 8 --price 24.99
 > python Agents/02_Product_Strategy_Agent/scripts/sku_pricing.py --list-platforms
 > ```
 >

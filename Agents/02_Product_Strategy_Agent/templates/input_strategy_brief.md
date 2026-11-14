@@ -24,7 +24,7 @@ decision_notes: ""             # 决策依据备注
 
 ```yaml
 platform*: shopee
-target_market*: 巴西
+target_market*: Shopee SG | Amazon US | TikTok Shop US | eBay US   # 必填。费率用对应 platform key
 category*: ""
 ```
 

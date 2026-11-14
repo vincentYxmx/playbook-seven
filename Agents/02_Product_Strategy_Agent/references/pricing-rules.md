@@ -20,28 +20,47 @@
 
 ## 参数默认值与出处
 
-**平台费率预设（2026-10-18 口径，来源与复核提醒见 `../scripts/platform_fees.json`）**：
+费率表是 **2026-11-14** 的公开起步口径，来源在 `../scripts/platform_fees.json`。卖家必须按自己的类目复核。`return_pct=2` 和 `ad_pct=5` 是定价预留，不是平台费。`tax_pct` 默认 0，**不代算税**。
 
-| key | 平台 | 佣金 | 按件固定费 | 附加 | 关键坑 |
-|---|---|---|---|---|---|
-| `shopee_br` | Shopee 巴西 | <R$80 → 20%；≥R$80 → 14% | ≤79.99→4 / 80–99.99→16 / 100–199.99→20 / ≥200→26 | 0 | 2026-03-01 新政：阶梯固定费 + 取消 R$100 佣金上限 |
-| `mercadolivre_br` | ML Clássico | 11%（10–14%） | <R$79→6.50（2026-03-02 起改为按重量/尺寸的变量物流成本） | 0 | <R$79 是最危险价格带，提价过线省按件费 |
-| `mercadolivre_br_premium` | ML Premium | 16%（15–19%） | 同上 | 0 | 贵 5pp 换分期免息 + 高曝光 |
-| `amazon_br` | Amazon 巴西 | 15%（Most categories，类目 8–15%） | 0（Professional；Individual 每件 R$2） | 0 | 月费 R$19；FBA 履约费另计；referral 按买家支付总额计 |
-| `tiktok_br` | TikTok Shop | <R$50 → 10%；≥R$50 → 6% | <R$50→4 / ≥R$50→6 | 6%（免运计划，自动加入） | 分档按卖家折扣后售价——券会跳档；低客单价 30% 起步 |
+### 一等平台（默认路径）
 
-**显式 CLI 参数永远优先于预设。** 平台规则会变，发布前到卖家中心复核；
-没找到可靠费率来源的平台（Magalu / Temu / Shein 等）**不做预设**，手工传参。
-
-## 历史手工默认值（手工口径 / 未用 --platform 时）
-
-| 参数 | 默认 | 出处 |
+| key | 佣金 | 能不能直接算 |
 |---|---|---|
-| 佣金 | 14% | Shopee BR 常见综合费率（含交易费），ML 按类目 13–17% —— 现已由上方平台预设取代 |
-| 退货损耗 | 2% | SOP 3.5 建议预留 |
-| 广告 | 5% | 定价模型预留（注意：实际投放常高于此，见 06 的盈亏线核对） |
-| 税 | 0% | **必须由使用者填**：Simples Nacional / ICMS / PIS+COFINS 折算成占售价 % |
-| 目标毛利 | 32% | 团队毛利目标（按公司填） |
+| `ebay_us` | 多数类目 **13.6%**（成交额 $7,500 以内）+ 每单 $0.30 / $0.40 | 可以，当作起步。类目例外、店铺费、sales tax 进基数，见 JSON notes |
+| `tiktok_us` | 多数类目 **6%**。指定珠宝与 Pre-Owned 为 5% | 多数类目可以起步。例外用 `--commission`。公式不含税、含买家运费 |
+| `amazon_us` | 按类目。公开页没有安全的单一百分比 | **拒绝计算**，直到传入 `--commission`。月费 $39.99 只提示 |
+| `shopee_sg` / `shopee_my` / `shopee_th` / `shopee_id` / `shopee_vn` / `shopee_ph` | SG 有类目表；其余五站本次未核到单一费率 | **全部拒绝**，直到 `--commission` |
+| `tiktok_sg` / `tiktok_my` / `tiktok_id` | 类目表。SG 交易费页面另写 3.27% | **拒绝**。交易费确认后用 `--extra-pct`，不要并进佣金 |
+| `tiktok_th` / `tiktok_vn` / `tiktok_ph` | 未知 | **拒绝** |
+
+```bash
+python scripts/sku_pricing.py calc --platform ebay_us --cost 8 --price 24.99
+python scripts/sku_pricing.py calc --platform tiktok_us --cost 8 --price 24.99
+python scripts/sku_pricing.py calc --platform amazon_us --cost 8 --price 24.99 --commission 15
+python scripts/sku_pricing.py --list-platforms
+```
+
+`--commission 15` 只是「卖家已经核对过自己的类目」之后的传参示例，**不是** Amazon 全类目费率。
+
+### 参考平台（巴西 / Mercado Livre，非默认）
+
+| key | 佣金 | 说明 |
+|---|---|---|
+| `shopee_br` | <R$80 → 20%；≥R$80 → 14%，外加阶梯固定费 | 只服务旧案例 |
+| `mercadolivre_br` / `_premium` | 11% / 16% 口径 | 只服务旧案例 |
+| `amazon_br` | 15% 多数类目口径 | 不是 `amazon_us` |
+| `tiktok_br` | <R$50 → 10%；≥R$50 → 6%，另有 6% 免运计划 | 不是 `tiktok_us` |
+
+### 未指定 `--platform` 时
+
+脚本仍用历史 14% 佣金，并在 stderr 警告。这个 14% **不是** 任何一个一等站点的费率。
+
+| 参数 | 默认 | 说明 |
+|---|---|---|
+| 退货损耗 | 2% | 工具箱预留，不是平台费 |
+| 广告 | 5% | 定价预留。真实投放用 06 的盈亏线再核对 |
+| 税 | 0% | 不代算。eBay 基数含 sales tax；TikTok US referral 不含税；其余看各页 |
+| 目标毛利 | 32% | 公司自己的目标，不是平台规则 |
 
 ---
 

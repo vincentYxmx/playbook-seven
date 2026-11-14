@@ -77,7 +77,7 @@
 
 ```text
 ❌ - [ ] 标题要尽量吸引人
-✅ - [ ] 标题字符数 ≤ 120，且不含促销词、表情符号、全大写词
+✅ - [ ] 标题符合该站点已核对的上限（Amazon US 非媒体类 ≤ 75，eBay US ≤ 80；上限未知的站点不假装有数字），且不含该站点禁止的促销词
 ```
 
 ---
@@ -88,7 +88,7 @@
 
 | 场景 | 输出语言 | 原因 |
 |---|---|---|
-| 标题 / 详情页 / 图内文案 / 字幕 | **目标市场母语**（巴西站 = PT-BR） | 直译英文的 Listing CTR 结构性偏低 |
+| 标题 / 详情页 / 图内文案 / 字幕 | **目标站点语言**（见下表） | 语言跟站点走。英语站直接用英语写，不要先写中文再翻译 |
 | 说明性字段、内部备注、参数含义 | 中文 | 方便运营人员核对 |
 | 图内文案 | 母语 + 字数上限标注 | 图内文字超长会挤压画面 |
 
@@ -96,13 +96,21 @@
 
 ```text
 # LANGUAGE RULE
-- 所有面向买家的文本（标题、描述、图内文案、字幕）必须使用 <PT-BR 巴西葡萄牙语>。
-- 禁止先写英文再翻译，必须以 <目标语言> 直接构思表达。
-- 参数单位使用公制（kg / cm / W / V / mAh），禁止英制（lb / inch）。
+- 买家可见文本使用目标站点语言，不使用中文：
+  Amazon US / eBay US / TikTok Shop US / Shopee SG / Shopee PH / TikTok SG / TikTok PH → English
+  Shopee MY / TikTok MY → English 或 Malay（以该类目要求为准）
+  Shopee TH / TikTok TH → ไทย
+  Shopee ID / TikTok ID → Bahasa Indonesia
+  Shopee VN / TikTok VN → Tiếng Việt
+- 未指定站点 → [INPUT_MISSING]，不要默认 PT-BR，也不要把英语套到泰/印尼/越南站。
+- 用目标语言直接写。不要先写中文或另一种语言再翻译。
+- 美国站可以使用买家习惯的英制，但必须与 spec_table 同一套，不得另编。
 - 内部备注字段用中文。
 ```
 
-> 为什么强调"不要先英文再翻译"：模型对"翻译任务"和"生成任务"的激活模式不同。写成翻译任务，会产出语法正确但读起来像外国人的文案（巴西买家能明显感知）。写成生成任务，才会调用母语的表达习惯。
+> PT-BR 只在明确指定 Shopee BR 或 Mercado Livre 的参考任务里使用。
+
+站点语言表的字段规范见 [`02_Platform_Output_Spec.md`](./02_Platform_Output_Spec.md)。
 
 ---
 
@@ -112,9 +120,9 @@ Prompt 里需要变量替换的地方，用 `<尖括号>` 标注，并在模板�
 
 ```text
 # CONTEXT
-平台：<Shopee / Mercado Livre>
-目标市场：<巴西 / 墨西哥 / 菲律宾>
-类目：<Patinete Elétrico / Carregador Portátil>
+平台：<Shopee SG / Amazon US / TikTok Shop US / eBay US>
+目标站点语言：<English / Bahasa Melayu / ไทย / Bahasa Indonesia / Tiếng Việt>
+类目：<65W GaN charger / pet carrier>
 ```
 
 不要用 `{var}` 或 `$VAR`——容易和代码模板冲突，也容易被模型误当成需要保留的字面量。

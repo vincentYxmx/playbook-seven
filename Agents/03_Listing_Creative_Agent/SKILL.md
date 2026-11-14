@@ -26,8 +26,9 @@ metadata:
 
 ```bash
 # 标题校验（字符数是实测值）
-python scripts/title_lint.py "标题文本" --platform shopee \
-    --forbidden "iPhone,Samsung" --keywords "carregador,20000mah,45w"
+python scripts/title_lint.py "65W GaN USB-C Charger, 2-Port" --platform amazon_us
+python scripts/title_lint.py "GaN USB-C Wall Charger 65W" --platform ebay_us
+python scripts/title_lint.py "65W GaN USB-C Charger" --platform shopee_sg
 
 # 参数一致性：文案里每个数字必须溯源到 spec_table
 python scripts/spec_consistency.py --spec examples/spec_table.csv --text 详情页文案.md
@@ -43,17 +44,16 @@ python scripts/spec_consistency.py --spec examples/spec_table.csv \
 
 ### title_lint.py（按平台规则卡）
 
-| 检查 | Shopee | Mercado Livre | Amazon |
+| 检查 | Amazon US | eBay US | Shopee SEA / TikTok |
 |---|---|---|---|
-| 字符上限 | 120 | **60** | 200 |
-| 前 30 字符 | ✅ 单独输出（权重最高段） | — | — |
-| 促销词 | ⚠️ 谨慎 | ⚠️ 明确不建议 | ⚠️ |
-| 表情符号 | ❌ 禁 | ⚠️ | ⚠️ |
-| 全大写堆砌 | ⚠️ | ⚠️ | ⚠️ |
-| 重复词 ≥3 次 | ❌ 堆砌降权 | ❌ | ⚠️ |
-| 中文字符混入 | ❌（PT-BR 站） | ❌ | ❌ |
-| 禁用词 | ❌（自备清单：未授权品牌词/绝对化用语） | ❌ | ❌ |
-| 核心词覆盖 | ⚠️ 缺词提醒 | ⚠️ | ⚠️ |
+| 字符上限 | 非媒体类 **75** | **80** | **未知**（只警告，不假装有上限） |
+| 促销词 | ❌ | ⚠️ | ❌ |
+| 表情符号 | ❌ | ⚠️ | ❌ |
+| 同一词超过两次 | ❌（Amazon 公告） | — | 重复 ≥3 次失败 |
+| 中文混入 | ❌ | ❌ | ❌ |
+| 站点语言 | 英语 | 英语 | 随站点。泰语站没有泰文会警告 |
+
+参考键 `shopee_br_ref`（120）和 `mercadolivre`（60）仍可用，不是默认。
 
 ### spec_consistency.py
 
@@ -62,7 +62,7 @@ python scripts/spec_consistency.py --spec examples/spec_table.csv \
 | **参数漂移** | 文案里每个数字溯源到 spec_table；溯不到 = 笔误/编造/口径不一致 |
 | **参数漏讲** | spec_table 里有数字的参数在文案中从未出现 → 提醒补内容 |
 
-支持巴西数字格式（`20.000` = 20000）与 `--allow` 豁免（年份等无关常量）。
+数字解析仍兼容巴西千分位（`20.000` = 20000）和美式 `20,000`，供参考案例使用。`--allow` 可豁免年份等无关常量。
 
 ---
 

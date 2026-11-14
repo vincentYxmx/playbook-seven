@@ -9,7 +9,7 @@
 
 ```yaml
 platform*: shopee              # shopee | mercadolivre | amazon | tiktokshop | shopify
-target_market*: 巴西            # 决定输出语言：巴西→PT-BR / 墨西哥→ES
+target_market*: Amazon US            # 决定买家可见语言。US/SG/PH=英语；MY=英语或马来语；TH=泰语；ID=印尼语；VN=越南语。不默认 PT-BR
 mode*: single                  # single | variant | iterate
 variant_count: 3               # mode=variant 时必填，2–4
 ```
@@ -44,7 +44,7 @@ sku_internal: ""                            # 内部 SKU 编码（可选）
 | `voltagem_entrada` | | 如 `100–240 V` |
 | `portas` | | 如 `2× USB-A + 1× USB-C` |
 | `tempo_recarga` | | 注明测试条件 |
-| `garantia` | | **巴西站必需** |
+| `warranty` | | 仅在目标站点或类目要求、且卖家确实提供时填写。巴西站参考案例里的 `garantia` 不是默认字段 |
 | `certificacoes` | | ⚠️ 仅填**实际持有**的认证，虚构属高危违规 |
 | `_custom_1` | | 类目特有参数，按需增删 |
 | `_custom_2` | | |

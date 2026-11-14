@@ -1,6 +1,6 @@
 # Examples · 真实案例库
 
-这里的案例**跨模块串联**，一个产品从头跑到尾，展示 03 → 04 → 05 的完整链路。
+这里的案例**跨模块串联**。新的默认路径是 [`04_GaN_Charger_US_SEA`](./04_GaN_Charger_US_SEA/)（Amazon US / eBay US / TikTok Shop US / Shopee SEA）。01–03 是巴西站参考，保留用来看闭环方法，不再代表默认语言或默认费率。
 
 单模块的聚焦案例在各 Agent 目录下的 `examples/`，本目录只放**端到端**案例。
 
@@ -10,7 +10,8 @@
 
 | # | 产品 | 市场 | 覆盖模块 | 重点演示 |
 |---|---|---|---|---|
-| **01** | [Patinete Elétrico 500W](./01_Patinete_Eletrico_500W/)（电动滑板车） | Shopee BR + Mercado Livre | 03 → 04 → 05 | **全链路串联** · 跨平台标题压缩（120→60 字符）· 跨模块参数一致性 |
+| **04** | [65W GaN Charger](./04_GaN_Charger_US_SEA/) | Amazon US、eBay US、TikTok Shop US、Shopee SEA | 02 → 03 → 04 → 05 → 06/07 | **当前默认路径**。只使用已核对的上限和费率；未知项保持未知 |
+| **01** | [Patinete Elétrico 500W](./01_Patinete_Eletrico_500W/)（电动滑板车） | Shopee BR + Mercado Livre（参考） | 03 → 04 → 05 | 历史全链路。不再是默认语言或默认费率 |
 | **02** | [Bolsa Térmica](./02_Thermal_Bag/)（保温包） | Shopee BR | 03（iterate） | **iterate 模式**：广告跑不动时的回改闭环 |
 | **03** | [Closed Loop](./03_Closed_Loop/)（闭环案例） | Shopee BR | 03 → 06 → 03 → 04 → 07 → 复测 | **诊断 → 回流 → 复测** 完整闭环 · 反直觉的坑 · 复测指标选择 |
 

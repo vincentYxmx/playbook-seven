@@ -1,22 +1,24 @@
 #!/usr/bin/env python3
 """SKU 定价算术脚本 —— 只算，不猜，不定价（定价决策由人）。
 
-  # 平台预设（推荐）：费率来自 scripts/platform_fees.json
-  python sku_pricing.py calc --platform shopee_br --cost 935 --price 2199
-  python sku_pricing.py calc --platform mercadolivre_br --cost 935 --price 2199
-  python sku_pricing.py calc --platform amazon_br --cost 935 --price 2199
-  python sku_pricing.py calc --platform tiktok_br --cost 935 --price 2199
+  # 一等平台（费率来自 scripts/platform_fees.json，发布前复核）
+  python sku_pricing.py calc --platform ebay_us --cost 8 --price 24.99
+  python sku_pricing.py calc --platform tiktok_us --cost 8 --price 24.99
+  python sku_pricing.py calc --platform amazon_us --cost 8 --price 24.99 --commission 15
+  python sku_pricing.py calc --platform shopee_sg --cost 8 --price 24.99 --commission 12
   python sku_pricing.py --list-platforms
 
-  # 手工口径（兼容旧用法，与预设等价的自定义费率）
+  # 手工口径（未指定 --platform 时的历史默认，不是任一等站点的费率）
   python sku_pricing.py calc --cost 935 --price 2199 --commission 14 --return 2 \
       --ad 5 --tax 0 --target-margin 32
-  python sku_pricing.py matrix --file examples/sample-skus.csv --platform shopee_br
 
-公式（含巴西税费项与平台按件固定费）：
+公式（tax_pct 默认 0，不代算税；另含平台按件固定费）：
   广告前毛利 = 售价 − 到岸成本 − 售价×(佣金%+退货%+税%+平台附加%) − 按件固定费
   净利率     = (广告前毛利 − 售价×广告%) ÷ 售价
   盈亏平衡价 / 目标价：费率随价格分档时用不动点迭代求（12 轮收敛）
+
+类目表平台（requires_commission_override）不传 --commission 就拒绝计算，
+不会退回历史 14%。巴西站 / Mercado Livre 预设仍可用，但是 reference，不是默认。
 """
 import argparse
 import csv
@@ -26,7 +28,8 @@ from pathlib import Path
 
 PLATFORMS_FILE = Path(__file__).with_name("platform_fees.json")
 
-# 未指定 --platform 时保持的历史默认（= 旧版行为，fixed fee 为 0）
+# 未指定 --platform 时保持的历史默认（旧版行为，fixed fee 为 0）。
+# 这不是 Shopee SEA / Amazon US / TikTok Shop / eBay US 的费率。
 LEGACY = dict(commission=14.0, return_rate=2.0, ad=5.0, tax=0.0,
               extra_pct=0.0, target_margin=32.0)
 
@@ -87,6 +90,7 @@ class FeeModel:
     def extra_pct(self) -> float:  return self._scalar("extra_pct", "extra_pct")
     def ad_pct(self) -> float:     return self._scalar("ad", "ad_pct")
     def target_margin(self) -> float: return self._scalar("target_margin", "target_margin_pct")
+    def currency(self) -> str: return self.p.get("currency", "")
 
     def margin(self, price: float, cost: float, ad_pct: float | None = None) -> dict:
         ad = self.ad_pct() if ad_pct is None else ad_pct
@@ -137,6 +141,21 @@ def _model_from_args(args, plats: dict) -> FeeModel:
                        if len(matches) > 1 else ""
                 sys.exit(f"[INPUT_MISSING] 未知平台 {args.platform!r}。可用：{keys}{hint}")
         preset = plats[key]
+        if (preset.get("requires_commission_override")
+                and getattr(args, "commission", None) is None):
+            src = preset.get("sources") or []
+            where = src[0] if src else "卖家中心费率页"
+            sys.exit(
+                f"[INPUT_MISSING] {preset.get('label', key)} 没有可套用的单一公开佣金"
+                f"（{preset.get('commission_status', 'unknown')}）。"
+                f"请按类目核对后传入 --commission。起点：{where}"
+            )
+    elif getattr(args, "cmd", None) in ("calc", "matrix"):
+        print(
+            "⚠️  未指定 --platform。佣金 14% 是脚本历史默认值，"
+            "不是 Shopee SEA / Amazon US / TikTok Shop / eBay US 的费率。",
+            file=sys.stderr,
+        )
     return FeeModel(preset,
                     commission=getattr(args, "commission", None),
                     return_rate=getattr(args, "return_rate", None),
@@ -170,11 +189,16 @@ def cmd_calc(args, plats) -> int:
         out["platform_monthly_fee"] = fm.p["monthly_fee"]
     print(json.dumps(out, ensure_ascii=False, indent=2))
     if not getattr(args, "json", False):
-        print(f"\n平台: {out['platform']} ｜ 佣金 {m['commission_pct_applied']}% ｜ "
-              f"固定费 R$ {m['fixed_fee_applied']:.2f} ｜ 平台附加 {fm.extra_pct()}% ｜ "
-              f"退货 {fm.return_pct()}% ｜ 税 {fm.tax_pct()}% ｜ 广告 {fm.ad_pct()}%")
-        print(f"净利率 {m['net_rate']:.1%} ｜ 盈亏价 R$ {be:,.2f} ｜ "
-              f"目标价 R$ {tp:,.2f} ｜ 券余量 R$ {out['coupon_headroom']:,.2f}")
+        cur = fm.currency()
+        unit = f"{cur} " if cur else ""
+        print(f"\n平台: {out['platform']} ｜ 货币 {cur or '未标明'} ｜ "
+              f"佣金 {m['commission_pct_applied']}% ｜ "
+              f"固定费 {unit}{m['fixed_fee_applied']:.2f} ｜ 平台附加 {fm.extra_pct()}% ｜ "
+              f"退货 {fm.return_pct()}% ｜ 税 {fm.tax_pct()}%（0=未代算）｜ 广告 {fm.ad_pct()}%")
+        print(f"净利率 {m['net_rate']:.1%} ｜ 盈亏价 {unit}{be:,.2f} ｜ "
+              f"目标价 {unit}{tp:,.2f} ｜ 券余量 {unit}{out['coupon_headroom']:,.2f}")
+        if fm.p.get("tier") == "reference":
+            print("  ⚠️  这是参考预设（巴西 / Mercado Livre），不是当前默认站点。")
         for note in fm.p.get("notes", [])[:3]:
             print(f"  ℹ️  {note}")
     return 0
@@ -261,8 +285,10 @@ def cmd_matrix(args, plats) -> int:
                   f"{r['fixed_fee_applied']:>8,.2f}{r['net_rate']:>8.1%}"
                   f"{r['vs_target']:>+9.1%}{r['coupon_headroom']:>9,.2f} {mark}")
         print()
+        cur = fm.currency()
+        unit = f"{cur} " if cur else ""
         for l in ladder:
-            print(f"  阶梯 {l['frm']} → {l['to']}：差 R$ {l['gap']:,.2f}（{l['gap_pct']:.0%}）")
+            print(f"  阶梯 {l['frm']} → {l['to']}：差 {unit}{l['gap']:,.2f}（{l['gap_pct']:.0%}）")
         for n in notes:
             print(f"  ℹ️  {n}")
         for note in fm.p.get("notes", [])[:2]:
@@ -271,35 +297,37 @@ def cmd_matrix(args, plats) -> int:
 
 
 def cmd_list_platforms(plats) -> int:
-    print(f"{'key':<28}{'平台':<22}{'佣金%':<12}{'固定费':<26}{'附加%':<7}")
-    print("-" * 80)
+    print(f"{'key':<28}{'层级':<12}{'货币':<6}{'佣金':<22}{'状态'}")
+    print("-" * 100)
     for k, v in plats.items():
         if k.startswith("_"):
             continue
-        ct = v.get("commission_tiers")
-        if ct:
-            comm = "/".join(f"≤{t['max']}:{t['pct']}%" if t.get("max") is not None
-                            else f">{[x['max'] for x in ct if x.get('max')][-1]}:{t['pct']}%"
-                            for t in ct)
+        if v.get("requires_commission_override"):
+            comm = "须 --commission"
         else:
-            comm = f"{v.get('commission_pct', '-')}%"
-        ft = v.get("fixed_fee_tiers")
-        if ft:
-            fee = "/".join(f"≤{t['max']}:{t['fee']}" if t.get("max") is not None
-                           else f">{[x['max'] for x in ft if x.get('max')][-1]}:{t['fee']}"
-                           for t in ft)
-        else:
-            fee = "0"
-        print(f"{k:<28}{v.get('label', k):<22}{comm:<12}{fee:<26}{v.get('extra_pct', 0):<7g}")
-    print("\n费率为编写时（见 _meta.updated）公开口径，发布前必须到各平台卖家中心复核；")
-    print("显式参数（--commission 等）永远优先于预设。")
+            ct = v.get("commission_tiers")
+            if ct:
+                comm = "/".join(
+                    f"≤{t['max']}:{t['pct']}%" if t.get("max") is not None
+                    else f">{[x['max'] for x in ct if x.get('max')][-1]}:{t['pct']}%"
+                    for t in ct)
+            else:
+                comm = f"{v.get('commission_pct', '-')}%"
+        print(f"{k:<28}{v.get('tier', '-'):<12}{v.get('currency', '-'):<6}"
+              f"{comm:<22}{v.get('commission_status', '-')}")
+    print("\n一等平台才是默认路径；reference 是巴西站 / Mercado Livre，仅供历史案例对照。")
+    print("return_pct / ad_pct 是定价预留，不是平台费。tax_pct 默认 0，不代算税。")
+    print("公开起步数字见各条 sources。发布前到卖家中心按类目复核；--commission 永远优先。")
     return 0
 
 
 def _num(v, default=0.0, kind="dec"):
     if v is None:
         return default
-    s = str(v).strip().replace("R$", "").replace("%", "").replace(" ", "")
+    s = str(v).strip()
+    for token in ("R$", "US$", "S$", "RM", "Rp", "฿", "₫", "₱", "$", "%"):
+        s = s.replace(token, "")
+    s = s.replace(" ", "")
     if s in ("", "-", "—", "暂无", "N/A", "nan"):
         return default
     neg = s.startswith("-")
@@ -328,7 +356,7 @@ def _add_common(p):
     p.add_argument("--ad", type=float, default=None, help="广告预算占售价 %%（覆盖预设）")
     p.add_argument("--tax", type=float, default=None, help="综合有效税率 %%（覆盖预设）")
     p.add_argument("--extra-pct", type=float, default=None, help="平台附加 %%（如免运计划；覆盖预设）")
-    p.add_argument("--fixed-fee", type=float, default=None, help="按件固定费 R$（覆盖预设阶梯）")
+    p.add_argument("--fixed-fee", type=float, default=None, help="按件固定费（平台货币，覆盖预设阶梯）")
     p.add_argument("--target-margin", type=float, default=None, help="目标净利 %%（默认 32）")
 
 
@@ -340,8 +368,8 @@ def main():
 
     c = sub.add_parser("calc", help="单 SKU：净利率 / 盈亏价 / 目标价 / 优惠券余量")
     _add_common(c)
-    c.add_argument("--cost", type=float, required=True, help="到岸成本 R$")
-    c.add_argument("--price", type=float, required=True, help="售价 R$")
+    c.add_argument("--cost", type=float, required=True, help="到岸成本（平台货币）")
+    c.add_argument("--price", type=float, required=True, help="售价（平台货币；是否含运费/税见该平台 notes）")
     c.add_argument("--json", action="store_true", help="仅输出 JSON")
 
     m = sub.add_parser("matrix", help="多 SKU 矩阵：读 CSV 出净利率表 + 价格阶梯 + 券余量")

@@ -1,8 +1,8 @@
 ---
 name: sop-ecom-image
 description: >-
-  跨境电商商品图生成 Skill，Shopee 巴西站与 Mercado Livre 专精。9 图框架规划、产品身份锁定、
-  平台规则内置（ML 新规：白底/纯色/实景按类目）、像素级合规校验与自动修复。
+  跨境电商商品图生成 Skill。一等平台为 Shopee SEA、Amazon US、TikTok Shop、eBay US。
+  9 图框架、产品身份锁定、像素级校验。Mercado Livre 与巴西站规则卡仅作参考。
   当用户要做商品主图、场景图、详情图、白底图、9 张图、图合规检查、换背景、SKU 换色时使用。
   中文「做图 / 主图 / 场景图 / 详情图 / 合规检查」同样触发。
   NOT for 视频剪辑、纯格式转换、批量压缩。
@@ -16,13 +16,11 @@ metadata:
   license: MIT
 ---
 
-# 04 · Product Image Skill（Shopee BR / Mercado Livre 专精）
+# 04 · Product Image Skill（Shopee SEA / Amazon US / TikTok / eBay US）
 
-把一张产品照 + 一份参数表，变成**一整套符合平台规范、可直接上架**的商品图。
+把一张产品照 + 一份参数表，变成**符合目标站点已核对规则**的商品图方案。
 
-**与 GitHub 上其它电商生图 Skill 的区别**：它们全部面向 Amazon / 淘宝 / 小红书 / TikTok Shop。
-本 Skill 专精两个平台 —— **Mercado Livre（规则最特殊：按类目区分背景、首图禁无关文字）**
-和 **Shopee 巴西（首图推荐叠字、饱和度高的葡语大字报风格）**，并保留 9 图规划框架。
+一等规则卡：[`platform-shopee.md`](references/platform-shopee.md)（SEA）、[`platform-amazon.md`](references/platform-amazon.md)、[`platform-tiktok.md`](references/platform-tiktok.md)、[`platform-ebay.md`](references/platform-ebay.md)。Mercado Livre 卡是参考。
 
 ---
 
@@ -61,8 +59,8 @@ metadata:
 ```text
 1. 产品图 1 张（手机随手拍也行，白底/实景都可）
 2. 参数表 spec_table（尺寸/容量/材质，来自 03 Listing Agent 的输出）
-3. 目标平台：shopee | mercadolivre | amazon
-4. 品类（决定 ML 的背景规则，见平台路由表）
+3. 目标平台：amazon_us | ebay_us | shopee_sea | tiktok
+4. 站点语言（图内文字用它，不用中文）
 ```
 
 ---
@@ -80,12 +78,13 @@ metadata:
 
 | platform | 规则卡 | 关键差异 |
 |---|---|---|
-| `shopee` | [references/platform-shopee.md](references/platform-shopee.md) | 首图**推荐叠字**（PT-BR 大字报）、饱和度高、9 图上限、单图 ≤2MB |
-| `mercadolivre` | [references/platform-mercadolivre.md](references/platform-mercadolivre.md) | **背景不再强制纯白**（白/纯色/实景按类目），但首图禁促销文字；占比要求最高（~95%） |
-| `amazon` | [references/platform-amazon.md](references/platform-amazon.md) | 最严：纯白 RGB(255,255,255) 必须 + 主体 ≥85% + 禁一切文字 |
+| `amazon_us` | [references/platform-amazon.md](references/platform-amazon.md) | 纯白 RGB(255,255,255)，主体约 85%，主图无文字 |
+| `ebay_us` | [references/platform-ebay.md](references/platform-ebay.md) | 最长边 ≥500px，≤12MB，最多 24 张。不强制白底或 1:1 |
+| `shopee_sea` | [references/platform-shopee.md](references/platform-shopee.md) | SG：1:1，单图 ≤2MB。Mall 封面不叠促销字 |
+| `tiktok` | [references/platform-tiktok.md](references/platform-tiktok.md) | ≥600×600 正方形，最多 9 张，视频 ≤5MB |
+| `mercadolivre` | [references/platform-mercadolivre.md](references/platform-mercadolivre.md) | **参考**。不要当默认 |
 
-**注意**：三个平台对「首图能不能有字」的答案**互相矛盾**，一套图不能直接复用 ——
-这正是本 Skill 按平台出规则卡的原因。
+主图能不能叠字，各站不一样。Amazon 主图不能；Shopee SG Mall 封面也不能。一套图不要直接复用。
 
 ---
 
@@ -137,8 +136,9 @@ ML 没有张数上限（建议 6–8 张），前 5 张按 ML 首图规则执行
 ## ⑤ 出图后必须过像素校验（不是"看一眼"）
 
 ```bash
-python scripts/check_main_image.py 出图.png --platform mercadolivre
-python scripts/check_main_image.py 出图.png --platform shopee --fix 修复后.png
+python scripts/check_main_image.py 出图.png --platform amazon_us
+python scripts/check_main_image.py 出图.png --platform ebay_us
+python scripts/check_main_image.py 出图.png --platform shopee_sea
 ```
 
 脚本会**逐像素**检查：尺寸、正方形、主体占比、背景纯净度/均匀度、文件大小，
@@ -163,4 +163,4 @@ clone 后跑一遍即可验证脚本是否正常。
 
 ---
 
-**返回**：[04 模块 README](README.md) · **规则卡**：[Shopee](references/platform-shopee.md) · [Mercado Livre](references/platform-mercadolivre.md) · [9 图场景库](references/scenarios-9grid.md)
+**返回**：[04 模块 README](README.md) · **规则卡**：[Shopee SEA](references/platform-shopee.md) · [Amazon US](references/platform-amazon.md) · [eBay US](references/platform-ebay.md) · [TikTok Shop](references/platform-tiktok.md) · [9 图场景库](references/scenarios-9grid.md)

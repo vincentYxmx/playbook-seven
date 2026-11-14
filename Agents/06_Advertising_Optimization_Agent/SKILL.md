@@ -1,8 +1,8 @@
 ---
 name: sop-ecom-ads
 description: >-
-  跨境电商广告决策层 Skill，Shopee 巴西与 Mercado Livre 专精。读广告导出报表 →
-  像素级算术（盈亏线 ROAS / 可承受 CPC / 净贡献，含巴西税费）→ P0/P1/P2 分级动作清单。
+  跨境电商广告决策层 Skill。读广告导出报表，算盈亏线 ROAS / 可承受 CPC / 净贡献，
+  输出 P0/P1/P2 动作。费率用一等平台预设；tax 不代算。巴西时段表只作参考。
   只建议，不执行 —— 不改后台、不自动调价。当用户要诊断广告、看 ROAS/ACOS、
   降预算降出价、广告亏钱分析、大促复盘时使用。中文「广告诊断 / 广告亏钱 / 预算怎么调」同样触发。
   NOT for 自动调价机器人、直接写平台后台、视频广告创意制作。
@@ -47,7 +47,7 @@ python scripts/ad_metrics.py diagnose --file examples/sample-ad-report.csv \
     --price 113.40 --product-cost 55 --commission 14 --return 2 --tax 0 --target-acos 25
 ```
 
-`--tax` 是**综合有效税率**（巴西 ICMS/PIS/COFINS/Simples Nacional 折算成占售价百分比）。
+`--tax` 是你自己折算的综合有效税率，默认不代算。不要把巴西 ICMS 口径套到美国销售税或东南亚间接税。
 税率 8% 时盈亏线 ROAS 从 2.82 抬到 3.64 —— **不含税的盈亏线是骗人的**。
 
 ---

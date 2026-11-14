@@ -1,8 +1,9 @@
 ---
 name: sop-ecom-pricing
 description: >-
-  SKU 定价算术 Skill，Shopee 巴西 / Mercado Livre。到岸成本 → 净利率 / 盈亏平衡价 /
-  目标价反算 / 价格阶梯 / 优惠券余量（含巴西税费项）。当用户要算毛利、定价、
+  SKU 定价算术 Skill。一等平台为 eBay US、TikTok Shop US、以及须自填佣金的
+  Amazon US / Shopee SEA / TikTok SEA。到岸成本 → 净利率 / 盈亏平衡价 /
+  目标价反算。tax_pct 默认 0，不代算税。巴西预设仅作参考。当用户要算毛利、定价、
   盈亏价、该发多少券、SKU 结构是否合理时使用。中文「算毛利 / 定价 / 盈亏价 / 发券」同样触发。
   NOT for 竞品定价调研、市场价格带分析（那是 01 的活）。
 allowed-tools:
@@ -64,4 +65,4 @@ python scripts/sku_pricing.py matrix --file examples/sample-skus.csv \
 
 1. **引流款净利率低于目标是策略不是事故** —— 但脚本会提醒你确认，且它必须高于盈亏平衡价
 2. **高配款净利率常常低于主推款**（成本涨得比售价快）—— 脚本会提示检查
-3. **税费别漏** —— `--tax 8` 就能把盈亏价抬高近三成，按自己的巴西税制折算填入
+3. **税不代算** —— `tax_pct` 默认 0。eBay 成交费基数含 sales tax；TikTok US referral 不含税。用 `--tax` 传入你自己折算的有效税率，不要套巴西税制

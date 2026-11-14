@@ -1,19 +1,334 @@
 {
   "_meta": {
-    "updated": "2026-10-18",
-    "currency": "BRL",
-    "note": "费率为编写时公开口径，按平台官方公告与主流费率计算器整理；发布前必须到各平台卖家中心复核。显式 CLI 参数（--commission 等）永远优先于预设。",
+    "updated": "2026-11-14",
+    "note": "公开规则的起步口径，不是报价。tier=first_class 才是默认路径；tier=reference 的巴西站 / Mercado Livre 预设只为对照历史案例，不得再当作未指定平台时的默认。发布前必须在自己的卖家中心按类目、店铺类型和订单日期复核。显式 CLI 参数永远优先于预设。",
+    "tax_limitation": "全部预设的 tax_pct 都是 0，表示本工具箱不代算税。eBay US 最终成交费的 total amount of the sale 按官方帮助页包含 sales tax。TikTok Shop US 的 referral 公式是 (Customer Payment + Platform Discount − Tax)，税不进基数。Amazon US 公开定价页写 referral 按 total sales price（商品价 + 运费 + 礼品包装），该页没有写明销售税是否计入。Shopee / TikTok SEA 的 GST、SST、VAT、PPN 是否含在公布费率里，以各站原文为准。进口关税、消费税、销售税都不在本表里。",
+    "planning_assumptions": "return_pct=2 与 ad_pct=5 是本工具箱沿用的定价预留，不是任何平台公布的费率。广告、达人佣金、FBA / 履约费、仓储费都不在佣金预设里。",
     "conventions": {
-      "commission_tiers": "佣金随售价分档，按序首个命中（max=null 表示无上限）",
-      "fixed_fee_tiers": "按件固定费随售价分档，同为价格分档",
-      "extra_pct": "平台自动附加的百分比（如免运计划），默认计入成本",
-      "return_pct": "退货损耗预留（估算口径，非平台费）",
-      "tax_pct": "综合有效税率预留，默认 0（巴西实际税负按主体与 regime 而异，须自行补充）"
+      "commission_tiers": "佣金随售价分档，按序首个命中（max=null 表示无上限）。这是整单分档，不是边际分段。",
+      "fixed_fee_tiers": "按件固定费随售价分档。若官方费用其实是按订单而不是按件，notes 会写明，脚本仍会把它算进单件。",
+      "requires_commission_override": "true 时没有单一可套用的公开佣金。不传 --commission 就拒绝计算，不会退回历史 14%。",
+      "extra_pct": "平台另收、且已确认可单列的百分比。未确认的不自动加。",
+      "return_pct": "退货损耗预留（估算，非平台费）",
+      "tax_pct": "综合有效税率预留，默认 0。见 tax_limitation。"
     }
   },
 
+  "ebay_us": {
+    "tier": "first_class",
+    "label": "eBay US（多数类目）",
+    "currency": "USD",
+    "commission_status": "public_starting_point",
+    "commission_pct": 13.6,
+    "fixed_fee_tiers": [
+      {"max": 10, "fee": 0.3},
+      {"max": null, "fee": 0.4}
+    ],
+    "return_pct": 2,
+    "ad_pct": 5,
+    "tax_pct": 0,
+    "extra_pct": 0,
+    "sources": [
+      "https://www.ebay.com/help/selling/fees-credits-invoices/selling-fees?id=4822",
+      "https://www.ebay.com/sellercenter/selling/start-selling-on-ebay/seller-fees"
+    ],
+    "notes": [
+      "13.6% 只对应官方帮助页 Most categories、且按件成交额不超过 $7,500 的部分；超过 $7,500 的部分官方为 2.35%。本预设不做边际拆分，高客单用 --commission 分开算。",
+      "书籍杂志、影视、音乐为 15.3%；女包在 $2,000 及以下为 15%；珠宝手表、部分收藏、吉他、运动鞋等另有表。店铺订阅、Motors、eBay Live 不在本预设。",
+      "每单固定费：订单 ≤$10 为 $0.30，订单 >$10 为 $0.40。脚本把它当成按件费，一单多件会高估。",
+      "计费基数含商品价、handling、向买家收取的运费（有例外）以及 sales tax。--price 若只填商品价，费用会被低估。",
+      "非店铺卖家每月前 250 条插入费为 $0，超出后 $0.35/条。未摊入单件。Below Standard 或 Item not as described 很高时还有附加最终成交费。"
+    ]
+  },
+
+  "amazon_us": {
+    "tier": "first_class",
+    "label": "Amazon US",
+    "currency": "USD",
+    "commission_status": "category_table",
+    "requires_commission_override": true,
+    "monthly_fee": 39.99,
+    "fixed_fee_tiers": [
+      {"max": null, "fee": 0}
+    ],
+    "return_pct": 2,
+    "ad_pct": 5,
+    "tax_pct": 0,
+    "extra_pct": 0,
+    "sources": [
+      "https://sell.amazon.com/pricing"
+    ],
+    "notes": [
+      "Referral fee 按类目，公开页没有一个可以安全套到所有商品的百分比。该页的 Everything Else 为 15%（最低 $0.30），同时写明不要把本属于其他类目的商品放进 Everything Else。必须用 --commission 传入本类目费率。",
+      "Professional 计划在该页为 $39.99/月（monthly_fee 只提示，不摊入单件）。Individual 为 $0.99/件，需要时用 --fixed-fee 0.99，不要和月费同时当成每件成本。",
+      "多数类目有最低 referral fee（该页常见 $0.30）。本预设不自动加最低佣金。媒体类脚注另有 closing fee $1.80/件。",
+      "FBA 配送费、仓储费、广告费未计入。referral 的公开定义是 total sales price = 标价 + 运费 + 礼品包装；销售税是否计入该页没有写明。"
+    ]
+  },
+
+  "tiktok_us": {
+    "tier": "first_class",
+    "label": "TikTok Shop US（多数类目）",
+    "currency": "USD",
+    "commission_status": "public_starting_point",
+    "commission_pct": 6,
+    "fixed_fee_tiers": [
+      {"max": null, "fee": 0}
+    ],
+    "return_pct": 2,
+    "ad_pct": 5,
+    "tax_pct": 0,
+    "extra_pct": 0,
+    "sources": [
+      "https://seller-us.tiktok.com/university/essay?knowledge_id=5988482086864682&lang=en",
+      "https://seller.tiktok.com/"
+    ],
+    "notes": [
+      "卖家大学文章（页面标注更新 2026-10-08）多数列出的类目为 6%。Diamond / Gold / Jade / Platinum, Carat Gold / Ruby, Sapphire & Emerald 以及 Pre-Owned 为 5%；Collectibles 与 Pre-Owned 超过 $10,000 的部分为 3%。这些例外用 --commission。",
+      "公式：Referral Fee Rate × (Customer Payment + Platform Discount − Tax)。基数含买家支付的运费，不含税。--price 只填商品价会低估。",
+      "达人佣金（卖家自设）、广告、退款时平台保留的 referral 份额未计入。seller.tiktok.com 首页亦写每笔销售收取 6% commission，以卖家大学类目表为准。"
+    ]
+  },
+
+  "tiktok_sg": {
+    "tier": "first_class",
+    "label": "TikTok Shop Singapore",
+    "currency": "SGD",
+    "commission_status": "category_table",
+    "requires_commission_override": true,
+    "fixed_fee_tiers": [{"max": null, "fee": 0}],
+    "return_pct": 2,
+    "ad_pct": 5,
+    "tax_pct": 0,
+    "extra_pct": 0,
+    "sources": [
+      "https://seller-sg.tiktok.com/university/essay?knowledge_id=2161524467910401&lang=en",
+      "https://seller-sg.tiktok.com/university/essay?knowledge_id=780268081530625&lang=en"
+    ],
+    "notes": [
+      "平台佣金按类目，且 Marketplace 与 Mall、BXP 不同。未在卖家大学表格里核对到你的类目之前，不要套用别人的百分比。",
+      "交易费页面写：2025-10-01 起费率 3.27%（GST inclusive），2026-04-01 起计费基数调整、费率仍为 3.27%。确认仍适用后，用 --extra-pct 3.27 单独加上，不要把它写进 --commission。",
+      "佣金公式（平台佣金页）：(Item Price − Seller Discount) × fee rate。运费和平台补贴不进这笔佣金的基数。税率是否已含在公布费率里，以该页原文为准。"
+    ]
+  },
+
+  "tiktok_my": {
+    "tier": "first_class",
+    "label": "TikTok Shop Malaysia",
+    "currency": "MYR",
+    "commission_status": "category_table",
+    "requires_commission_override": true,
+    "fixed_fee_tiers": [{"max": null, "fee": 0}],
+    "return_pct": 2,
+    "ad_pct": 5,
+    "tax_pct": 0,
+    "extra_pct": 0,
+    "sources": [
+      "https://seller-my.tiktok.com/university/essay?knowledge_id=6907739532281602&lang=en"
+    ],
+    "notes": [
+      "佣金按类目，Marketplace / Mall、BXP / 非 BXP 各不相同。卖家大学写 2026-10-31 起调整费率。本预设不抽取单一百分比。",
+      "公式： (Item Price − Seller Discount) × Fee Rate。运费与平台补贴不进佣金基数。SST 是否另计，以页面与卖家中心为准。"
+    ]
+  },
+
+  "tiktok_th": {
+    "tier": "first_class",
+    "label": "TikTok Shop Thailand",
+    "currency": "THB",
+    "commission_status": "unknown",
+    "requires_commission_override": true,
+    "fixed_fee_tiers": [{"max": null, "fee": 0}],
+    "return_pct": 2,
+    "ad_pct": 5,
+    "tax_pct": 0,
+    "extra_pct": 0,
+    "sources": [
+      "https://seller-th.tiktok.com/university/home?lang=en"
+    ],
+    "notes": [
+      "本次未核到可引用的单一公开佣金。到泰国站卖家大学的 Commission / Seller fees 原文核对后，用 --commission 传入。不要沿用美国 6% 或巴西预设。"
+    ]
+  },
+
+  "tiktok_id": {
+    "tier": "first_class",
+    "label": "TikTok Shop Indonesia",
+    "currency": "IDR",
+    "commission_status": "category_table",
+    "requires_commission_override": true,
+    "fixed_fee_tiers": [{"max": null, "fee": 0}],
+    "return_pct": 2,
+    "ad_pct": 5,
+    "tax_pct": 0,
+    "extra_pct": 0,
+    "sources": [
+      "https://seller-id.tokopedia.com/university/course?content_id=7392850066884369&lang=en&learning_id=4759438594787088"
+    ],
+    "notes": [
+      "卖家大学课程页给出的平台佣金区间是 2.50%–12.20%（按类目），另有动态佣金、订单处理费 Rp1,250/单、物流服务费等。区间不是可套用的费率，固定费也未自动计入，避免和未核对的类目佣金叠错。",
+      "用 --commission 填已核对的类目佣金。若确认订单处理费仍为 Rp1,250/单，再用 --fixed-fee 1250。"
+    ]
+  },
+
+  "tiktok_vn": {
+    "tier": "first_class",
+    "label": "TikTok Shop Vietnam",
+    "currency": "VND",
+    "commission_status": "unknown",
+    "requires_commission_override": true,
+    "fixed_fee_tiers": [{"max": null, "fee": 0}],
+    "return_pct": 2,
+    "ad_pct": 5,
+    "tax_pct": 0,
+    "extra_pct": 0,
+    "sources": [
+      "https://seller-vn.tiktok.com/university/home?lang=en"
+    ],
+    "notes": [
+      "本次未核到可引用的单一公开佣金。到越南站卖家大学核对后用 --commission。不要沿用美国 6%。"
+    ]
+  },
+
+  "tiktok_ph": {
+    "tier": "first_class",
+    "label": "TikTok Shop Philippines",
+    "currency": "PHP",
+    "commission_status": "unknown",
+    "requires_commission_override": true,
+    "fixed_fee_tiers": [{"max": null, "fee": 0}],
+    "return_pct": 2,
+    "ad_pct": 5,
+    "tax_pct": 0,
+    "extra_pct": 0,
+    "sources": [
+      "https://seller-ph.tiktok.com/university/home?lang=en"
+    ],
+    "notes": [
+      "本次未核到可引用的单一公开佣金。商品内容规则见卖家大学 Product Listing Guidelines，费率另页。用 --commission 传入已核对的类目费率。"
+    ]
+  },
+
+  "shopee_sg": {
+    "tier": "first_class",
+    "label": "Shopee Singapore",
+    "currency": "SGD",
+    "commission_status": "category_table",
+    "requires_commission_override": true,
+    "fixed_fee_tiers": [{"max": null, "fee": 0}],
+    "return_pct": 2,
+    "ad_pct": 5,
+    "tax_pct": 0,
+    "extra_pct": 0,
+    "sources": [
+      "https://seller.shopee.sg/edu/article/13107/seller-fees"
+    ],
+    "notes": [
+      "佣金按类目，并区分 Promo Xtra 与非 Promo Xtra，部分类目有金额上限。卖家教育页写符合条件的新卖家前 120 天基础佣金为 0%，之后按类目。该页费率含 GST 与否以原文 ‘GST-inclusive’ 表述为准。",
+      "不要把巴西站阶梯佣金套到新加坡。核对类目表后用 --commission。"
+    ]
+  },
+
+  "shopee_my": {
+    "tier": "first_class",
+    "label": "Shopee Malaysia",
+    "currency": "MYR",
+    "commission_status": "unknown",
+    "requires_commission_override": true,
+    "fixed_fee_tiers": [{"max": null, "fee": 0}],
+    "return_pct": 2,
+    "ad_pct": 5,
+    "tax_pct": 0,
+    "extra_pct": 0,
+    "sources": [
+      "https://seller.shopee.com.my/edu/home"
+    ],
+    "notes": [
+      "本次未核到可引用的马来西亚站单一佣金。到 Seller Education 的 Seller Fees 原文核对（含 SST）后用 --commission。"
+    ]
+  },
+
+  "shopee_th": {
+    "tier": "first_class",
+    "label": "Shopee Thailand",
+    "currency": "THB",
+    "commission_status": "unknown",
+    "requires_commission_override": true,
+    "fixed_fee_tiers": [{"max": null, "fee": 0}],
+    "return_pct": 2,
+    "ad_pct": 5,
+    "tax_pct": 0,
+    "extra_pct": 0,
+    "sources": [
+      "https://seller.shopee.co.th/edu/home"
+    ],
+    "notes": [
+      "本次未核到可引用的泰国站单一佣金。到卖家教育中心核对后用 --commission。VAT 不在本预设。"
+    ]
+  },
+
+  "shopee_id": {
+    "tier": "first_class",
+    "label": "Shopee Indonesia",
+    "currency": "IDR",
+    "commission_status": "unknown",
+    "requires_commission_override": true,
+    "fixed_fee_tiers": [{"max": null, "fee": 0}],
+    "return_pct": 2,
+    "ad_pct": 5,
+    "tax_pct": 0,
+    "extra_pct": 0,
+    "sources": [
+      "https://seller.shopee.co.id/edu/home"
+    ],
+    "notes": [
+      "本次未核到可引用的印尼站单一佣金。到卖家教育中心核对后用 --commission。PPN 不在本预设。"
+    ]
+  },
+
+  "shopee_vn": {
+    "tier": "first_class",
+    "label": "Shopee Vietnam",
+    "currency": "VND",
+    "commission_status": "unknown",
+    "requires_commission_override": true,
+    "fixed_fee_tiers": [{"max": null, "fee": 0}],
+    "return_pct": 2,
+    "ad_pct": 5,
+    "tax_pct": 0,
+    "extra_pct": 0,
+    "sources": [
+      "https://banhang.shopee.vn/edu/home"
+    ],
+    "notes": [
+      "本次未核到可引用的越南站单一佣金。到 Shopee Uni 的费用原文核对后用 --commission。"
+    ]
+  },
+
+  "shopee_ph": {
+    "tier": "first_class",
+    "label": "Shopee Philippines",
+    "currency": "PHP",
+    "commission_status": "unknown",
+    "requires_commission_override": true,
+    "fixed_fee_tiers": [{"max": null, "fee": 0}],
+    "return_pct": 2,
+    "ad_pct": 5,
+    "tax_pct": 0,
+    "extra_pct": 0,
+    "sources": [
+      "https://seller.shopee.ph/edu/home"
+    ],
+    "notes": [
+      "本次未核到可引用的菲律宾站单一佣金。到 Seller Education 核对后用 --commission。"
+    ]
+  },
+
   "shopee_br": {
-    "label": "Shopee 巴西",
+    "tier": "reference",
+    "label": "Shopee 巴西（参考，非默认）",
+    "currency": "BRL",
+    "commission_status": "reference_only",
     "commission_tiers": [
       {"max": 79.99, "pct": 20},
       {"max": null, "pct": 14}
@@ -34,6 +349,7 @@
       "14%/20% 的另一种口径：14% 基础 + 6% 免运计划（Frete Grátis Extra）；两种理解都存在，用 --commission 覆盖"
     ],
     "notes": [
+      "参考预设。一等站点已改为 Shopee SG/MY/TH/ID/VN/PH，不要把本档当成东南亚费率。",
       "2026-03-01 起：固定费按售价阶梯收取（≤79.99→R$4；80–99.99→R$16；100–199.99→R$20；≥200→R$26），取消单件 R$100 佣金上限，高单价商品成本显著上升",
       "Pix 支付补贴 5%（售价 80–499）/ 8%（≥500），可部分对冲固定费上涨；免运计划 2026-03 起全站免费参与",
       "CPF 个人卖家近 90 天订单 >450 笔：每单加收 R$3；售价 <R$12 递减收费、<R$8 按售价 50% 收固定费"
@@ -41,7 +357,10 @@
   },
 
   "mercadolivre_br": {
-    "label": "Mercado Livre 巴西（Clássico）",
+    "tier": "reference",
+    "label": "Mercado Livre 巴西 Clássico（参考，非默认）",
+    "currency": "BRL",
+    "commission_status": "reference_only",
     "commission_pct": 11,
     "fixed_fee_tiers": [
       {"max": 79.0, "fee": 6.5},
@@ -57,6 +376,7 @@
       "Go Smarter ML 计算器 2026：Clássico 11% + 类目调整（Moda +2pp / Eletrônicos premium +3pp / Livros −1pp），<R$79 固定费 R$6.50"
     ],
     "notes": [
+      "参考预设，不再是默认平台。",
       "<R$79 固定费 R$6.50 是旧表估算值 —— 2026-03-02 起改为按重量/尺寸计的变量物流成本，轻小件可能更低、大件更低值更高，精确值须按包裹规格在卖家中心查表",
       "产品定价 ≥R$79 可省掉按件费：R$70 的商品『为省 R$6.50 而定价多付一倍』是常见误区，提价过线是第一个毛利杠杆",
       "Premium 广告位（Parceiro/Mercado Ads 另计）：满额免邮与 Full 物流成本未计入本预设，需按实际运营模式补充"
@@ -64,7 +384,10 @@
   },
 
   "mercadolivre_br_premium": {
-    "label": "Mercado Livre 巴西（Premium）",
+    "tier": "reference",
+    "label": "Mercado Livre 巴西 Premium（参考，非默认）",
+    "currency": "BRL",
+    "commission_status": "reference_only",
     "commission_pct": 16,
     "fixed_fee_tiers": [
       {"max": 79.0, "fee": 6.5},
@@ -78,12 +401,16 @@
       "同 mercadolivre_br；Premium 佣金 15–19%，计算器主流口径 16%（含 12x 免息分期与更高曝光）"
     ],
     "notes": [
+      "参考预设，不再是默认平台。",
       "Premium 比 Clássico 贵约 5pp，换取分期免息 + 更高曝光位 —— 高客单价商品通常值得，低毛利商品先跑 Clássico 验证转化"
     ]
   },
 
   "amazon_br": {
-    "label": "Amazon 巴西",
+    "tier": "reference",
+    "label": "Amazon 巴西（参考，非默认）",
+    "currency": "BRL",
+    "commission_status": "reference_only",
     "commission_pct": 15,
     "fixed_fee_tiers": [
       {"max": null, "fee": 0}
@@ -99,6 +426,7 @@
       "FBA 履约费未计入本预设（按尺寸/重量另计：小件 ≤250g 约 R$9.90、中件 ≤500g 约 R$12.15，第三方口径待官方核对）"
     ],
     "notes": [
+      "参考预设。一等 Amazon 站点是 amazon_us，且美国站佣金必须按类目传入。",
       "15% 为 Most categories 通用档；常用类目差异：Electronics 11–13%（Electronics & PC Accessories >R$100 部分降为 10%）、Home/Kitchen 12%、PC 12%、Sports 12%、Beauty 13%、Books/Media 15%、Furniture 15%（>R$200 部分 10%）；最低佣金 R$1.00/件",
       "referral fee 按 买家支付总额（商品+运费+礼品包装）计，不只是商品价",
       "退货管理费：退款时扣 min(R$10, 20%×referral fee) —— 与退货损耗预留（return_pct）是两回事",
@@ -107,7 +435,10 @@
   },
 
   "tiktok_br": {
-    "label": "TikTok Shop 巴西",
+    "tier": "reference",
+    "label": "TikTok Shop 巴西（参考，非默认）",
+    "currency": "BRL",
+    "commission_status": "reference_only",
     "commission_tiers": [
       {"max": 49.99, "pct": 10},
       {"max": null, "pct": 6}
@@ -126,6 +457,7 @@
       "免运计划（Programa de Taxas de Envio）6%，单件上限 R$50，注册后自动加入（Seller Center 可退出）—— 计入 extra_pct"
     ],
     "notes": [
+      "参考预设。一等 TikTok 站点是 tiktok_us 与 tiktok_sg/my/th/id/vn/ph。",
       "分档基准是『卖家折扣后』的售价（平台补贴不算在内）—— R$55 商品打 R$10 券按 R$45 结算，会跳档到 10%+R$4",
       "低价位陷阱：R$20 商品 = 10%（R$2）+ 固定费 R$4 = 30% 起步，加免运 6% 到 36% —— 低客单价先算账再上架",
       "新店 60–90 天免佣金（活动而定），但固定费与免运计划不免；达人对佣金（通常 8–15%）另算，可与平台费叠加",

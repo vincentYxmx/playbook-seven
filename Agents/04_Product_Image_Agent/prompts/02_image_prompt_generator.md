@@ -98,7 +98,11 @@ distorted proportions, extra objects, cluttered background,
 plastic look, cartoon, illustration, 3d render (unless intended)
 ```
 
-## Mercado Livre 主图专用（必须加）
+## Amazon US 主图，以及 Shopee SG Mall 封面（必须加）
+
+与下面的 Mercado Livre 参考清单相同：主图不叠字、不加水印、不加未包含的配件。
+
+## Mercado Livre 主图（仅参考任务）
 
 ```text
 text of any kind, letters, numbers printed on the image, watermark,
@@ -106,7 +110,7 @@ logo, badge, ribbon, colored block, frame, border, background gradient,
 additional props, accessories not included in the package
 ```
 
-## Shopee 主图（可保留商品本身标签）
+## Shopee 非 Mall 附图（封面是否允许叠字以该站卖家中心为准；SG Mall 封面走上面的无文字清单）
 
 ```text
 watermark, extra props, cluttered background, distracting elements
