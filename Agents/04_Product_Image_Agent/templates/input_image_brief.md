@@ -9,7 +9,7 @@
 
 ```yaml
 platform*: shopee              # shopee | mercadolivre | amazon | tiktokshop | shopify
-target_market*: 巴西
+target_market*: Amazon US | eBay US | Shopee SG | TikTok Shop US
 mode*: standard                # standard | variant | iterate
 prompt_language: en            # en（通用模型）| zh（即梦/通义万相等中文模型）
 has_product_photo*: true       # 是否有实拍图作为参考

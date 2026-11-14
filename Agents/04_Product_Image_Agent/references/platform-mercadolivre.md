@@ -1,5 +1,7 @@
-# Mercado Livre · 商品图规则卡（2026 新规版）
+# Mercado Livre · 商品图规则卡（参考，非默认）
 
+> 本卡不再是 04 的默认平台。一等图片规则见 `platform-amazon.md`、`platform-ebay.md`、`platform-shopee.md`（SEA）、`platform-tiktok.md`。
+> 下面的巴西站口径只供 `examples/pet_carrier.md` 等历史案例对照。
 > 来源：ML 官方卖家中心（cbt.mercadolibre.com/pictures 与 global-selling 学习中心）。
 > **⚠️ 规则已变**：不再要求所有类目纯白底。发布前按类目到卖家中心复核。
 

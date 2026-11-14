@@ -84,7 +84,7 @@ Step 3  把「系统 Prompt」+「任务 Prompt」+「填好的模板」丢给�
 Step 4  用 docs/04_Result_Checklist.md 逐条自检，通过即发布
 ```
 
-**第一次跑，建议按这个顺序**（以 Patinete Elétrico 为例，见 [`Examples/`](./Examples/)）：
+**第一次跑，建议按这个顺序**（一等站点示例是 65W GaN 充电器，见 [`Examples/04_GaN_Charger_US_SEA/`](./Examples/04_GaN_Charger_US_SEA/)）。电动滑板车仍留在 [`Examples/01_Patinete_Eletrico_500W/`](./Examples/01_Patinete_Eletrico_500W/)，只作巴西站参考：
 
 ```mermaid
 flowchart LR
@@ -140,7 +140,7 @@ AI-Cross-Border-Ecommerce-Agent-Toolkit/
 │   ├── 02_Product_Strategy_Agent/             ✅ v0.4 Skill 化
 │   │   ├── SKILL.md    Agent 直接调用入口 ⭐
 │   │   ├── references/ pricing-rules（公式与口径）⭐
-│   │   ├── scripts/    sku_pricing（净利率/盈亏价/目标价/券余量矩阵）+ platform_fees.json（5 平台费率预设）⭐
+│   │   ├── scripts/    sku_pricing + platform_fees.json（一等站点费率；未知佣金拒绝计算）⭐
 │   │   ├── prompts/    00_system · 01_product_decision · 02_pricing_and_sku
 │   │   ├── templates/  input_strategy_brief · output_product_requirement
 │   │   └── examples/   patinete_eletrico_strategy.md · sample-skus.csv
@@ -153,7 +153,7 @@ AI-Cross-Border-Ecommerce-Agent-Toolkit/
 │   │   └── examples/   powerbank_20000mah.md · spec_table.csv
 │   ├── 04_Product_Image_Agent/                ✅ v0.4 Skill 化
 │   │   ├── SKILL.md    Agent 直接调用入口 ⭐
-│   │   ├── references/ platform-shopee · platform-mercadolivre · platform-amazon · scenarios-9grid
+│   │   ├── references/ platform-shopee（SEA）· platform-amazon · platform-ebay · platform-tiktok · platform-mercadolivre（参考）
 │   │   ├── scripts/    check_main_image（像素级合规校验 + --fix）⭐
 │   │   ├── prompts/    00_system · 01_image_plan_9grid · 02_image_prompt_generator
 │   │   ├── templates/  input_image_brief · output_image_prompt_pack
@@ -184,10 +184,11 @@ AI-Cross-Border-Ecommerce-Agent-Toolkit/
 │   ├── cost_pricing_template.md          # 定价模型（可验算）
 │   └── output_qa_checklist.md            # 可打印版自检清单
 │
-└── Examples/                     # 真实产品端到端案例库
-    ├── 01_Patinete_Eletrico_500W/        # 旗舰：03→04→05 全链路
-    ├── 02_Thermal_Bag/                   # iterate 模式：广告诊断→回改
-    └── 03_Closed_Loop/                   # 闭环：诊断→回流→复测 ⭐
+└── Examples/                     # 端到端案例
+    ├── 04_GaN_Charger_US_SEA/            # 默认路径：Amazon US / eBay US / TikTok / Shopee SEA ⭐
+    ├── 01_Patinete_Eletrico_500W/        # 参考：巴西站 03→04→05
+    ├── 02_Thermal_Bag/                   # 参考：iterate
+    └── 03_Closed_Loop/                   # 参考：诊断→回流→复测
 ```
 
 案例产品覆盖（制作说明指定的五款）：Electric Scooter · Power Bank · Pet Carrier · Air Fryer · Thermal Bag ✅
@@ -198,21 +199,22 @@ AI-Cross-Border-Ecommerce-Agent-Toolkit/
 
 ## 📱 平台支持
 
-| 平台 | 状态 | 标题上限 | 主图规范 | 输出语言 |
+| 平台 | 状态 | 标题上限（已核对才写数字） | 主图 | 买家可见语言 |
 |---|---|---|---|---|
-| **Shopee** | ✅ 一等支持 | 120 字符（前 30 字符权重最高） | 白底，最多 9 图 | PT-BR / EN / 本地语 |
-| **Mercado Livre** | ✅ 一等支持 | 60 字符 | 背景干净（白/纯色/实景按类目），主体 85–95%，≥1200×1200 | PT-BR / ES |
-| Amazon | 📄 字段已适配 | 200 字符（建议 80） | 纯白底，≥1000×1000 | EN |
-| TikTok Shop | 📄 字段已适配 | 按站点 | 竖版 9:16 优先 | 本地语 |
-| Shopify | 📄 字段已适配 | 建议 70 | 无硬限制 | EN / 本地语 |
+| **Shopee SG / MY / TH / ID / VN / PH** | ✅ 一等 | 按店铺 `get_item_limit`，**不默认 120** | SG：1:1 必传，单图 ≤2MB；Mall 封面有额外规则 | SG/PH 英语；MY 英语或马来语；TH 泰语；ID 印尼语；VN 越南语 |
+| **Amazon US** | ✅ 一等 | 非媒体类 **75**；Item Highlights 125。媒体类未知 | 纯白，主体约 85%，主图无文字 | 英语 |
+| **TikTok Shop US + SEA** | ✅ 一等 | **未知**（不采用未经正文核对的 255） | ≥600×600 正方形，最多 9 张；视频 ≤5MB | 与上表同站点 |
+| **eBay US** | ✅ 一等 | **80** | 1–24 张，≤12MB，最长边 ≥500px。不强制白底 | 英语 |
+| Shopee 巴西 / Mercado Livre | 📄 参考 | 旧卡 120 / 60 | 见参考规则卡 | PT-BR |
+| Shopify | 📄 非一等 | 旧卡建议 70，未复核定 | — | — |
 
-详细字段规范见 [`docs/02_Platform_Output_Spec.md`](./docs/02_Platform_Output_Spec.md)。**所有硬指标以平台后台实时规则为准，发布前请复核。**
+详细字段规范见 [`docs/02_Platform_Output_Spec.md`](./docs/02_Platform_Output_Spec.md)。**写了数字的，也要在发布前到卖家中心复核。没写数字的，不要用巴西站旧值填上。**
 
 ---
 
 ## 🧭 设计原则
 
-1. **母语输出优先**——巴西站的标题必须像巴西人写的。直译英文 Listing 的 CTR 结构性偏低，所以 Prompt 强制要求原生 PT-BR 表达，而不是"翻译腔"。
+1. **站点语言优先**——买家可见文本用目标站点的语言直接写。Amazon US、eBay US、TikTok Shop US、Shopee SG/PH 用英语；马来西亚用英语或马来语；泰国、印尼、越南用当地语言。PT-BR 只属于明确指定的巴西参考任务。
 2. **输入契约化**——每个 Prompt 都声明"缺什么字段就不许输出什么内容"。宁可报错，不许编参数。
 3. **合规优先于转化**——涉及参数虚标、品牌词、夸大宣传的动作，Prompt 里一律做**硬拦截**，不是"建议"。详见 [`docs/03_Compliance_Guard.md`](./docs/03_Compliance_Guard.md)。
 4. **可验证**——每个模块交付时给一份自检清单，逐条打勾才算完成。产出对不对，不靠感觉。
@@ -238,7 +240,7 @@ AI-Cross-Border-Ecommerce-Agent-Toolkit/
 | **v0.2** | 2 个运营 Agent（06 广告 / 07 评论）+ 闭环案例 |
 | **v0.3** | 2 个分析 Agent（01 市场 / 02 策略）+ **数据解析与指标计算脚本**（当前） |
 | **v1.0** | 打通完整工作流，输出一键上架用的素材包 |
-| V2 | 接入平台 API（Shopee / Mercado Livre）自动拉取数据 |
+| V2 | 接入一等平台 API（Shopee Open Platform、Amazon SP-API、TikTok Shop、eBay） |
 | V3 | 网页应用，可视化跑工作流 |
 | V4 | 升级为自动化 Agent 系统（定时执行 + 闭环优化） |
 

@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
-"""像素级商品主图合规校验（Shopee / Mercado Livre / Amazon）。
+"""像素级商品主图合规校验。
 
-  python check_main_image.py 图.png --platform mercadolivre
+  python check_main_image.py 图.png --platform amazon_us
+  python check_main_image.py 图.png --platform ebay_us
+  python check_main_image.py 图.png --platform shopee_sea
+  python check_main_image.py 图.png --platform tiktok
   python check_main_image.py 图.png --platform shopee --fix 修复后.png
-  python check_main_image.py 图.png --platform amazon --json
 
-只依赖 Pillow。校验阈值来自 references/ 下各平台规则卡，不是拍脑袋。
+`shopee` / `amazon` / `mercadolivre` 三个旧键保留，供既有夹具对照。
+一等站点用 amazon_us、ebay_us、shopee_sea、tiktok。
+只依赖 Pillow。未核到的硬阈值不判 FAIL。
 
 检查项
   size_min        : 短边像素（低于平台最小值 = 直接 fail）
@@ -41,6 +45,32 @@ PLATFORMS = {
     "amazon": dict(
         min_px=1000, rec_px=2000, cover_min=0.85, cover_lo=0.85, cover_hi=0.97,
         white_fail=0.98, white_warn=0.99, uniform_info=0.90, max_mb=10, fix_target=0.87,
+        square="warn", size_axis="long",
+        white_note="Amazon 主图要纯白。本键把短边/长边 ≥1000 当作缩放档，正方形只警告：官方样式指南写的是最长边，不强制全类目 1:1。文件 10MB 是旧工具箱阈值，本次未在样式指南里复核。",
+    ),
+    "amazon_us": dict(
+        min_px=1000, rec_px=1000, cover_min=0.85, cover_lo=0.85, cover_hi=0.97,
+        white_fail=0.98, white_warn=0.99, uniform_info=0.90, max_mb=None, fix_target=0.87,
+        square="warn", size_axis="long",
+        white_note="主图纯白 RGB(255,255,255)，主体约 85%（Amazon 类目样式指南）。最长边 ≥1000px 来自 Industrial & Scientific 指南的缩放档；服饰指南写 1500px，以该类目指南为准。",
+    ),
+    "ebay_us": dict(
+        min_px=500, rec_px=500, cover_min=None, cover_warn=None,
+        white_fail=None, white_warn=None, uniform_info=0.90, max_mb=12, fix_target=0.85,
+        square="skip", size_axis="long",
+        white_note="eBay 未要求主图纯白。帮助页：至少 1 张、最多 24 张，单张 ≤12MB；高级刊登工具写最长边至少 500px。主体占比没有官方百分比。",
+    ),
+    "shopee_sea": dict(
+        min_px=500, rec_px=500, cover_min=None, cover_warn=0.60,
+        white_fail=None, white_warn=0.90, uniform_info=0.90, max_mb=2, fix_target=0.80,
+        square="fail", size_axis="short",
+        white_note="SG：1:1 仍必传；Media Space 单图 ≤2MB，JPG/JPEG/PNG。Mall 封面建议白/纯色、商品至少 60%、最低 500×500，且封面不叠促销字。非 Mall 不要把 60% 当成全站硬 FAIL。",
+    ),
+    "tiktok": dict(
+        min_px=600, rec_px=600, cover_min=None, cover_warn=0.60,
+        white_fail=None, white_warn=0.90, uniform_info=0.90, max_mb=None, fix_target=0.80,
+        square="fail", size_axis="short",
+        white_note="PH 卖家大学：最多 9 张正方形、至少 600×600、主图纯色（建议白）、商品至少占画面 60%、须完整正面。SG 上传说明要求纯白且无文字/水印。单图文件大小未核到（视频上限 5MB 不在本脚本）。",
     ),
 }
 
@@ -111,32 +141,44 @@ def check(img, path, plt_name, args):
     def add(level, name, detail):
         res.append((level, name, detail))
 
-    # 尺寸
-    mn = min(m["width"], m["height"])
-    if mn < p["min_px"]:
-        add("FAIL", "size_min", f"{mn}px < 平台最低 {p['min_px']}px")
-    elif mn < p["rec_px"]:
-        add("WARN", "size_min", f"{mn}px 达最低但低于推荐 {p['rec_px']}px（缩放功能受限）")
+    # 尺寸。size_axis=long 时用最长边（eBay / Amazon 样式指南的写法）。
+    axis = p.get("size_axis", "short")
+    px = max(m["width"], m["height"]) if axis == "long" else min(m["width"], m["height"])
+    side = "长边" if axis == "long" else "短边"
+    if px < p["min_px"]:
+        add("FAIL", "size_min", f"{side} {px}px < 平台最低 {p['min_px']}px")
+    elif px < p["rec_px"]:
+        add("WARN", "size_min", f"{side} {px}px 达最低但低于推荐 {p['rec_px']}px")
     else:
-        add("PASS", "size_min", f"{mn}px ≥ 推荐 {p['rec_px']}px")
+        add("PASS", "size_min", f"{side} {px}px ≥ 推荐 {p['rec_px']}px")
 
-    # 正方形
+    # 正方形：fail = 官方要求 1:1；warn = 不强制；skip = 不检查
     ratio = abs(m["width"] - m["height"]) / max(m["width"], m["height"])
-    if ratio > 0.01:
-        add("FAIL", "square", f"{m['width']}×{m['height']} 非正方形（会被平台自动裁切）")
+    square_mode = p.get("square", "fail")
+    if square_mode == "skip":
+        add("INFO", "square", f"{m['width']}×{m['height']}（本平台不要求 1:1）")
+    elif ratio > 0.01:
+        lv = "FAIL" if square_mode == "fail" else "WARN"
+        add(lv, "square", f"{m['width']}×{m['height']} 非正方形")
     else:
         add("PASS", "square", "1:1")
 
-    # 主体占比
+    # 主体占比。cover_min 才是硬 FAIL；只有 cover_warn 时降为警告。
     c = m["coverage"]
-    if c < p["cover_min"]:
+    if p.get("cover_min") is None:
+        warn_at = p.get("cover_warn")
+        if warn_at and c < warn_at:
+            add("WARN", "coverage", f"{c:.0%} < {warn_at:.0%}（Mall / 主图建议值，不是已核实的全站硬阈值）")
+        else:
+            add("INFO", "coverage", f"{c:.0%}（本预设没有全站硬性占比）")
+    elif c < p["cover_min"]:
         add("FAIL", "coverage", f"{c:.0%} < 平台下限 {p['cover_min']:.0%}")
     elif c < p["cover_lo"] or c > p["cover_hi"]:
         add("WARN", "coverage", f"{c:.0%} 超出甜区 {p['cover_lo']:.0%}–{p['cover_hi']:.0%}")
     else:
         add("PASS", "coverage", f"{c:.0%}")
 
-    # 背景纯白（Amazon 必须 / Shopee 优先 / ML 不适用）
+    # 背景纯白
     if p["white_fail"] is not None:
         wb = m["white_background"]
         if wb < p["white_fail"]:
@@ -146,7 +188,7 @@ def check(img, path, plt_name, args):
         else:
             add("PASS", "white_bg", f"{wb:.1%}")
     else:
-        add("INFO", "white_bg", "ML 不强制纯白（按类目白/纯色/实景），跳过")
+        add("INFO", "white_bg", p.get("white_note", "本预设不把纯白当作硬性 FAIL"))
 
     # 背景均匀度（ML 的"背景干净"）
     u = m["bg_uniformity"]
@@ -159,7 +201,9 @@ def check(img, path, plt_name, args):
 
     # 文件大小
     mb = os.path.getsize(path) / 1048576 if os.path.exists(path) else 0
-    if mb > p["max_mb"]:
+    if p.get("max_mb") is None:
+        add("INFO", "file_size", f"{mb:.2f} MB（官方单图上限未核到，不判 FAIL）")
+    elif mb > p["max_mb"]:
         add("FAIL", "file_size", f"{mb:.2f} MB > 上限 {p['max_mb']} MB")
     else:
         add("PASS", "file_size", f"{mb:.2f} MB ≤ {p['max_mb']} MB")
@@ -168,7 +212,15 @@ def check(img, path, plt_name, args):
     if plt_name == "mercadolivre":
         add("MANUAL", "ml_cover_text", "首图禁促销文字/平台属性词/水印/边框 —— 人工确认")
     if plt_name == "shopee":
-        add("MANUAL", "shopee_text_ratio", "图内文字 ≤ 画面 20% 且不大于主体 —— 人工确认")
+        add("MANUAL", "shopee_text_ratio", "图内文字 ≤ 画面 20% 且不大于主体 —— 人工确认（旧巴西向夹具）")
+    if plt_name == "shopee_sea":
+        add("MANUAL", "cover_text", "Mall 封面不叠促销字、水印、装饰边框 —— 人工确认")
+    if plt_name in ("amazon", "amazon_us"):
+        add("MANUAL", "main_text", "主图不得有文字、Logo、水印、不包含的配件 —— 人工确认")
+    if plt_name == "ebay_us":
+        add("MANUAL", "main_photo", "主图应完整正面展示在售商品；瑕疵用附图标出。不造官方未写的占比阈值。")
+    if plt_name == "tiktok":
+        add("MANUAL", "main_text", "主图须为实物正面，SG 规则另禁文字与水印 —— 人工确认")
 
     ok = not any(lv == "FAIL" for lv, _, _ in res)
     return dict(platform=plt_name, ok=ok, metrics=m, checks=res)

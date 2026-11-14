@@ -1,6 +1,8 @@
 # 00 · 从 SOP 到 Agent：架构拆解总表
 
 > 本文是整个工具箱的**源头文档**。它回答一个问题：一份 38 页的跨境运营 SOP，哪些部分能交给 AI，哪些不能，以及怎么切。
+>
+> 这份 SOP 原文以 **Shopee 巴西站**为背景。仓库的**默认执行站点**已经改为 Shopee SEA（SG/MY/TH/ID/VN/PH）、Amazon US、TikTok Shop US 与 SEA、eBay US。下面的章节映射仍然有效；凡是文中把巴西或 Mercado Livre 当成唯一平台的操作细节，以 [`02_Platform_Output_Spec.md`](./02_Platform_Output_Spec.md) 为准。
 
 ---
 

@@ -4,6 +4,20 @@
 
 ---
 
+## [v0.5] — 2026-11-14
+
+一等站点改为 **Shopee SEA（SG/MY/TH/ID/VN/PH）**、**Amazon US**、**TikTok Shop US 与 SEA**、**eBay US**。Shopee 巴西与 Mercado Livre 保留为参考，不再是默认语言、默认规则卡或默认费率。
+
+买家可见文本按站点语言写：美国站、eBay US、TikTok US、Shopee/TikTok 的 SG 与 PH 用英语；MY 用英语或马来语；TH 泰语；ID 印尼语；VN 越南语。内部备注仍用中文。
+
+费率只写入本次能对着公开页面核对的起步数字（eBay US 多数类目 13.6% 加每单固定费；TikTok Shop US 多数类目 6%）。类目表和未核到的站点必须传入 `--commission`，脚本不再退回历史 14%。`tax_pct` 仍为 0，不代算税。
+
+标题与图片的硬上限同样只保留已核对的数字：Amazon US 非媒体类 75 字符，eBay US 80 字符，Shopee SG 视频 10–60 秒。Shopee SEA 与 TikTok 的标题字符上限标为未知。
+
+新增默认案例 [`Examples/04_GaN_Charger_US_SEA`](./Examples/04_GaN_Charger_US_SEA/README.md)。历史滑板车、充电宝、空气炸锅案例未删除。
+
+---
+
 ## [v0.3] — 2026-10-13
 
 补齐 **分析簇（前置链路）**：01 市场分析、02 产品策略。**7 个 Agent 模块全部完成。**

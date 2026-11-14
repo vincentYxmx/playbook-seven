@@ -1,4 +1,7 @@
-# 9 图场景库（Shopee 序列 × 平台差异）
+# 9 图场景库（内容顺序 × 站点差异）
+
+> 默认站点是 Shopee SEA、Amazon US、TikTok Shop、eBay US。图内文字用站点语言。
+> 下面若出现 PT-BR 或 Mercado Livre，只属于参考任务。
 
 > 每个图位给出：**目的 / 构图 / prompt 骨架 / 平台差异**。
 > 用法：按 `planning_mode` 选序列 → 逐图位套模板 → 把「产品身份锁定」字段填进
@@ -38,16 +41,18 @@ no extra objects, keep {must_not_change} unchanged
 | 项 | 内容 |
 |---|---|
 | 目的 | 搜索结果里的点击率 —— 决定生死的唯一一张 |
-| 构图 | 正面平视，商品占 **Shopee 70–85% / ML 85–95%**，居中 |
+| 构图 | 正面平视，商品完整居中。Amazon 约 85%；Shopee SG Mall 至少 60%；eBay 无官方占比 |
 | 骨架 | `studio packshot of [PRODUCT], front view, on {bg}, soft studio lighting` |
-| **Shopee** | 白底 + **PT-BR 叠字**（主标语 ≤4 词，总文字 ≤画面 20%，右上留 12% 给角标） |
-| **ML** | 背景**干净即可**（白/纯色/实景按类目），❌ 禁一切无关文字 |
-| Amazon | 纯白 `#FFFFFF`，零文字 |
+| **Amazon US** | 纯白 `#FFFFFF`，主图零文字 |
+| **eBay US** | 完整正面。不强制白底，不强制 1:1 |
+| **Shopee SEA** | 1:1。SG Mall 封面不叠促销字 |
+| **TikTok** | 正方形，至少 600 px。主图不叠导流文字 |
+| **ML（参考）** | 背景按类目，首图不叠无关文字 |
 
-**Shopee BR 叠字模板**：
+**仅参考任务、且站点允许叠字时**：
 
 ```text
-top banner text "{主标语 ≤4 词}" in bold {color} PT-BR typography,
+top banner text "{主标语 ≤4 词，用站点语言}" in bold {color} typography,
 occupying less than 20% of the image area, never covering the product
 ```
 

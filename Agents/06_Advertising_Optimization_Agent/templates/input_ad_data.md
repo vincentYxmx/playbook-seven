@@ -10,7 +10,7 @@
 platform*: shopee              # shopee | mercadolivre
 ad_type*: keyword              # keyword | product | shop（Shopee）/ Mercado Ads
 test_window_days*: 7           # 数据覆盖天数
-target_market: 巴西
+target_market: Amazon US | eBay US | TikTok Shop US | Shopee SG
 target_market_timezone: "UTC-3"
 
 # 可选但建议填

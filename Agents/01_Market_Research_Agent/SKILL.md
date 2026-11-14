@@ -1,6 +1,6 @@
 ---
 name: sop-market-research
-description: 跨境电商市场调研 Skill（Shopee BR / Mercado Livre）。把虾多拉等工具导出的类目 CSV 洗成标准数据，算市场容量、品牌/卖家集中度（CR3/CR10/HHI）、价格带分箱与波谷检测、配置交叉表，并解读"这个类目值不值得进"。当用户要"看类目 / 市场分析 / 价格带 / 竞品集中度 / 选品前置调研"时使用。
+description: 跨境电商市场调研 Skill。默认站点为 Shopee SEA、Amazon US、TikTok Shop US/SEA、eBay US。把类目 CSV 洗成标准数据，算市场容量、品牌/卖家集中度（CR3/CR10/HHI）、价格带分箱与波谷检测、配置交叉表。巴西站样本仅作参考。当用户要"看类目 / 市场分析 / 价格带 / 竞品集中度 / 选品前置调研"时使用。
 allowed-tools:
   - Bash(python *)
   - Read
@@ -68,5 +68,5 @@ python scripts/make_sample.py
 ## 已知限制
 
 - 数据采集本身不在本 Skill 内（虾多拉/卖家后台导出由使用者提供）
-- 指标均**未含巴西税费**，涉及利润判断时提醒使用者自行补税率
+- 指标均**未含税**。不要把巴西税制当成 SEA/US 的默认税负
 - 销量数据是平台展示口径，存在刷单噪声，结论注明数据来源与时间

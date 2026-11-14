@@ -4,7 +4,7 @@
 video_timing.py — 05 Product Video Agent 的确定性算术层。
 
 只算，不判断"写得好不好"：
-  1. 逐句配音词数 → 预估时长（默认 PT-BR 语速 2.5 词/秒，可用 --wps 调）
+  1. 逐句配音词数 → 预估时长（默认 2.5 词/秒，只是规划值，可用 --wps 调）
   2. 时间轴（每句起止 + 累计）
   3. 字幕行长（默认 > 42 字符/行告警）
   4. 钩子检查（第一句 ≤ 8 词，保证 3 秒内说完）
@@ -27,7 +27,7 @@ from pathlib import Path
 
 # ---------------------------------------------------------------- 常量
 
-DEFAULT_WPS = 2.5          # PT-BR 口播语速：约 150 词/分钟
+DEFAULT_WPS = 2.5          # 规划用词速，不是平台规定。英语可先用；泰/越/印尼语请按配音回听改 --wps
 DEFAULT_SUBTITLE_MAX = 42  # 单行字幕字符上限（移动端可读性经验值）
 HOOK_MAX_WORDS = 8         # 第一句钩子词数上限（≈3 秒）
 TOLERANCE = 0.15           # 总时长相对目标的允许偏差 ±15%
@@ -136,7 +136,7 @@ def target_check(total: float, target: float | None) -> dict | None:
 
 def to_markdown(res: dict, chk: dict | None, wps: float, subtitle_max: int) -> str:
     L = ["# 配音时长与字幕校验报告\n"]
-    L.append(f"- 语速假设：**{wps} 词/秒**（PT-BR 口播经验值，可 --wps 调整）")
+    L.append(f"- 语速假设：**{wps} 词/秒**（规划值，不是平台规定；可 --wps 调整）")
     L.append(f"- 字幕单行上限：**{subtitle_max} 字符**")
     L.append(f"- 总句数：**{len(res['rows'])}**")
     L.append(f"- 预估总时长：**{_fmt_sec(res['total_seconds'])}**")

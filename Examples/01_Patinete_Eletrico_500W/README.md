@@ -2,6 +2,8 @@
 
 > **案例类型**：旗舰案例 · 真实产品 · 已脱敏
 > **覆盖模块**：03 Listing Creative → 04 Product Image → 05 Product Video
+> **地位**：参考案例，不是默认路径。当前默认见 [`../04_GaN_Charger_US_SEA/`](../04_GaN_Charger_US_SEA/)。
+>
 > **市场**：Shopee 巴西站（主）+ Mercado Livre（对照）
 > **对应 SOP**：1.8 关键词表 · 3.3 Listing + 9 图 + 详情页结构 · 3.4 多链接启动
 

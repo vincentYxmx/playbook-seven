@@ -9,7 +9,7 @@
 
 ```yaml
 platform*: shopee
-target_market*: 巴西
+target_market*: Shopee SG | Amazon US | TikTok Shop US | eBay US   # 必填。不要默认巴西
 category*: ""                  # 类目名
 sample_size: 0                 # 样本商品数（从 metrics_report 读）
 data_date: ""                  # 数据日期 YYYY-MM-DD

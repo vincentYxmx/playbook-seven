@@ -1,7 +1,8 @@
 ---
 name: sop-ecom-toolkit
 description: >-
-  跨境电商运营 AI 工具箱总入口（Shopee 巴西站 / Mercado Livre 专精，PT-BR）。
+  跨境电商运营 AI 工具箱总入口。一等站点：Shopee SEA（SG/MY/TH/ID/VN/PH）、
+  Amazon US、TikTok Shop US 与 SEA、eBay US。Shopee 巴西与 Mercado Livre 仅作参考。
   覆盖 7 条工作流：市场调研、产品策略与定价、Listing 文案、商品图（9 图框架）、
   短视频物料、广告诊断、评论分析，以及"诊断→回改→复测"闭环。
   当用户要"看类目 / 定价 / 写标题 / 写详情页 / 做主图 / 做详情图 / 9 张图 /
@@ -30,7 +31,10 @@ metadata:
    指标一律跑 `scripts/` 下的脚本，Agent 不心算
 2. **合规优先** —— 刷单/诱导评价/虚假宣传/恶意举报等平台禁止行为不做
    （见 `docs/03_Compliance_Guard.md`、`docs/05_SOP_Gap_Register.md`）
-3. **买家可见文本 = 目标市场母语（PT-BR）**，内部备注用中文；
+3. **买家可见文本 = 目标站点语言**，内部备注用中文。
+   Amazon US / eBay US / TikTok US / Shopee SG / Shopee PH 用英语；
+   Shopee 与 TikTok 的 MY 用英语或马来语（以站点要求为准）；
+   TH 泰语、ID 印尼语、VN 越南语。未指定站点就停，不要默认 PT-BR。
    所有数字必须溯源到 `spec_table`
 
 ## 路由表
@@ -62,8 +66,9 @@ metadata:
 3. 跑子模块 scripts/ 下的脚本出确定性数字（命令都在子 SKILL.md 的速查表里）
 4. 按 prompts/ 的规则产出内容
 5. 有校验脚本的必须过校验，不过不交付
-6. 涉及上架的提醒用户：平台规则为编写时公开值，发布前到卖家中心复核；
-   定价模型未含巴西税费，使用前自行补税率
+6. 涉及上架的提醒用户：硬指标只采用已核对的公开值，未知项标未知；
+   发布前到卖家中心复核。定价预设的 tax_pct 为 0，不代算销售税、GST、SST、VAT、PPN 或进口税。
+   eBay US 最终成交费基数含 sales tax；TikTok Shop US referral 公式不含税
 ```
 
 ## 已知限制

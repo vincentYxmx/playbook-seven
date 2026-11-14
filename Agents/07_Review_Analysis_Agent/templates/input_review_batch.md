@@ -9,7 +9,7 @@
 
 ```yaml
 platform*: shopee
-target_market*: 巴西
+target_market*: Amazon US | eBay US | Shopee SG | TikTok Shop TH
 product_name*: ""
 analysis_scope*: own          # own（仅我方）| competitor（仅竞品）| both（对比）
 ```

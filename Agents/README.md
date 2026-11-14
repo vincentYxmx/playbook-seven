@@ -82,14 +82,16 @@ v0.1 按**工作簇**重排为 `03-04-05`（创意簇：文案→图→视频）
 | 上游 | 输出字段 | 回流目标 | 约束 |
 |---|---|---|---|
 | **06** | `symptom_by_group` / `ctr_fail_groups` / `atc_fail_groups` / `cvr_fail_groups` / `breakeven_roas` | 03（iterate）、04（iterate） | **只改症状指向的环节**，其余不动 |
-| **07** | `review_patch_suggestions` / `forbidden_words_candidates` / `selling_points_ranked` / `packaging_clarity_needed` | 03（iterate）、04（iterate） | 修补文案须为**目标市场母语**且可直接粘贴 |
+| **07** | `review_patch_suggestions` / `forbidden_words_candidates` / `selling_points_ranked` / `packaging_clarity_needed` | 03（iterate）、04（iterate） | 修补文案须为**目标站点语言**且可直接粘贴 |
 
 **闭环纪律**（前文各模块反复强调）：
 1. 一次只改一个**病因**（指向同一病因的动作可同批）
 2. 不属于症状的环节**不许动**
 3. 未达标**不加码同一动作**，回诊断重新定位
 
-完整闭环演示见 [`../Examples/03_Closed_Loop/`](../Examples/03_Closed_Loop/)。完整前置链路见 [`01`](./01_Market_Research_Agent/examples/patinete_eletrico_market.md) → [`02`](./02_Product_Strategy_Agent/examples/patinete_eletrico_strategy.md) → [`03`](./03_Listing_Creative_Agent/examples/powerbank_20000mah.md)。
+一等站点的走通示例见 [`../Examples/04_GaN_Charger_US_SEA/`](../Examples/04_GaN_Charger_US_SEA/)（Amazon US / eBay US / TikTok Shop US / Shopee SEA）。
+
+闭环机制的历史演示仍在 [`../Examples/03_Closed_Loop/`](../Examples/03_Closed_Loop/)（巴西站参考）。前置链路的参考案例：[`01`](./01_Market_Research_Agent/examples/patinete_eletrico_market.md) → [`02`](./02_Product_Strategy_Agent/examples/patinete_eletrico_strategy.md) → [`03`](./03_Listing_Creative_Agent/examples/powerbank_20000mah.md)。
 
 ---
 
